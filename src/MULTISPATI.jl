@@ -24,7 +24,7 @@ export AbstractMultispati,
     moransIbounds,
     varianceMoransIdecomposition
 
-include("multispati.jl")
+include("multispati_.jl")
 include("spatialPCA.jl")
 
 end # module MULTISPATI
