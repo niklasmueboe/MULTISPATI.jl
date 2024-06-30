@@ -1,14 +1,14 @@
 module MULTISPATI
 
 import Base: size, show
-import LinearAlgebra: eigvals, eigvecs
+import LinearAlgebra: eigvals, eigvecs, issymmetric
 import MultivariateStats: LinearDimensionalityReduction, projection, reconstruct
 import StatsAPI: fit, predict
 import Statistics: mean
 
 using Arpack: eigs
 using Base: @__dot__
-using LinearAlgebra: I, Symmetric, eigen
+using LinearAlgebra: I, Symmetric, eigen, normalize!
 using SparseArrays: issparse
 
 export AbstractMultispati,

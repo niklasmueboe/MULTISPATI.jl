@@ -120,17 +120,21 @@ function fit(
 
     if !issparse(X)
         meanvec = vec(mean(X; dims=2))
-        X = X - meanvec
+        X = X .- meanvec
     else
         meanvec = nothing
     end
 
-    normalize!.(eachcol(W), p=1)
+    normalize!.(eachcol(W), 1)
+
+    maxoutdim = validate_maxoutdim(d, n, maxoutdim)
 
     H = (X * (transpose(W) + W) * transpose(X)) / 2n
 
+    @assert isapprox(H, H') # issymmetric does not have option to specify tolerance
+
     eigenvals, eigenvecs = multispati_decomposition(
-        H, maxoutdim; solver=solver, tol=tol, maxiter=maxiter
+        Symmetric(H), maxoutdim; solver=solver, tol=tol, maxiter=maxiter
     )
 
     return SpatialPCA(mean, eigenvecs, eigenvals, W)

@@ -110,7 +110,8 @@ end
 
 Perform Multispati over the data given a matrix `X`. Each column of `X` is an **observation**.
 `W` is a connectivity matrix where ``w_{ij}`` is the connection from j -> i.
-`Q` is a symmetric matrix of size `n` and `D` a symmetric matrix of size `d`
+`Q` is a symmetric matrix of size `n` (or LinearAlgebra.UniformScaling(@ref)) 
+and `D` a symmetric matrix of size `d` (or LinearAlgebra.UniformScaling(@ref)) 
 
 **Keyword arguments**
 
@@ -133,43 +134,41 @@ function fit(
     ::Type{Multispati},
     X::AbstractMatrix{T},
     W::AbstractMatrix{U},
-    Q::AbstractMatrix{T}=I,
-    D::AbstractMatrix{T}=I / size(X, 2);
+    Q=I,
+    D=I / size(X, 2);
     maxoutdim::Union{Nothing,Integer,Tuple{Integer,Integer}}=nothing,
     solver::Symbol=:eig,
     tol::Real=0.0,
     maxiter::Real=300,
 ) where {T<:Real,U<:Real}
-    m, n = size(X)
+    d, n = size(X)
     w1, w2 = size(W)
 
     if w1 != w2
         throw(DimensionMismatch("`W` must be a square Matrix"))
     end
 
-    if !issymmetic(Q)
+    if !issymmetric(Q)
         throw(ArgumentError("`Q` must be symmetric"))
     end
-    if !issymmetic(D)
+    if !issymmetric(D)
         throw(ArgumentError("`D` must be symmetric"))
     end
 
     if w1 != n
         throw(DimensionMismatch("# cols of `X` must match dimensions of `W`"))
     end
-    if d1 != n
-        throw(DimensionMismatch("# cols of `X` must match dimensions of `D`"))
-    end
-    if q1 != m
-        throw(DimensionMismatch("# rows of `X` must match dimensions of `Q`"))
-    end
 
-    normalize!.(eachcol(W), p=1)
+    normalize!.(eachcol(W), 1)
+
+    maxoutdim = validate_maxoutdim(d, n, maxoutdim)
 
     H = (X * (W * D + D * transpose(W)) * transpose(X) * Q) / 2
 
+    @assert isapprox(H, H')  # issymmetric does not have option to specify tolerance
+
     eigenvals, eigenvecs = multispati_decomposition(
-        H, maxoutdim; solver=solver, tol=tol, maxiter=maxiter
+        Symmetric(H), maxoutdim; solver=solver, tol=tol, maxiter=maxiter
     )
 
     return Multispati(eigenvecs, eigenvals, W)
@@ -187,62 +186,65 @@ function validate_maxoutdim(d::Integer, n::Integer, maxoutdim)
     return maxoutdim
 end
 
-# TODO: return negative instead of lowest eigenvalues
-function multispati_decomposition(H, outdim; kwargs...)
-    outdim = validate_maxoutdim(m, n, outdim)
+# TODO: return negative instead of lowest eigenvalues?
+function multispati_decomposition(H, outdim; solver=:eig, kwargs...)
 
-    # TODO: remove zero eigenvalues?
+    # TODO: remove zero eigenvalues when d > n?
     if solver == :eigs || issparse(H)
-        eigenvals, eigenvecs = arpack_decomposition(H, outdim...; kwargs...)
+        eigenvals, eigenvecs = arpack_decomposition(H, outdim; kwargs...)
         return real.(eigenvals), real.(eigenvecs)
     elseif solver == :eig
-        return la_decomposition(Symmetric(H), outdim...)
+        return la_decomposition(H, outdim)
     else
         throw(ArgumentError("Invalid solver name $(solver)"))
     end
 end
 
+# TODO: consistent sorting?; eigen is sorted from low to high, eigs depends on which
+
 # ARPACK solver
 function arpack_decomposition(H, ::Nothing; kwargs...)
-    return eigs(H; nev=size(H, 1) - 1, which=:LM, ritzvec=true, kwargs...)
+    # TODO: remove zeros
+    val, vec = eigs(H; nev=size(H, 1) - 1, which=:LM, ritzvec=true, kwargs...)
+    idx = sortperm(val; rev=true)
+    return val[idx], vec[:, idx]
 end
-function arpack_decomposition(H, npos; kwargs...)
+function arpack_decomposition(H, npos::Integer; kwargs...)
     return eigs(H; nev=npos, which=:LR, ritzvec=true, kwargs...)
 end
-function arpack_decomposition(H, npos, nneg; kwargs...)
+function arpack_decomposition(H, (npos, nneg); kwargs...)
     if npos == 0
         return eigs(H; nev=nneg, which=:SR, ritzvec=true, kwargs...)
     elseif nneg == 0
-        return eigs(H; nev=npos, which=:LR, ritzvec=true, kwargs...)
+        arpack_decomposition(H, npos; kwargs...)
     else
-        #TODO
-        return eigs(H; nev=npos, which=:BE, ritzvec=true, kwargs...)
+        ncomp = min(2 * max(nneg, npos), size(H, 1) - 1)
+        val, vec = eigs(H; nev=ncomp, which=:BE, ritzvec=true, kwargs...)
+        n = length(val)
+        ind = vcat(1:nneg, (n - npos + 1):n)
+        return reverse(val[ind]), reverse(vec[:, ind]; dims=2)
     end
 end
 
 # LinearAlgebra solver
 function la_decomposition(H, npos::Union{Nothing,Integer})
-    val, vec = eig(H)
-    n = size(val)
+    val, vec = eigen(H; sortby=-)
     if !isnothing(npos)
-        ind = (n - npos + 1):n
-        val = val[ind]
-        vec = vec[:, ind]
+        val = val[1:npos]
+        vec = vec[:, 1:npos]
     end
     return val, vec
 end
-function la_decomposition(H, npos::Integer, nneg::Integer)
-    val, vec = eig(H)
-    n = size(val)
+function la_decomposition(H, (npos, nneg))
+    val, vec = eigen(H; sortby=-)
+    n = length(val)
     if nneg == 0
-        ind = (n - npos + 1):n
+        ind = 1:npos
     elseif npos == 0
-        ind = 1:nneg
+        ind = (n - nneg + 1):n
     else
-        ind = (1:nneg; (n - npos + 1):n)
+        ind = vcat(1:npos, (n - nneg + 1):n)
     end
 
-    val = val[ind]
-    vec = vec[:, ind]
-    return val, vec
+    return val[ind], vec[:, ind]
 end
