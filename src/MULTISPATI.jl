@@ -11,8 +11,18 @@ using Base: @__dot__
 using LinearAlgebra: I, Symmetric, eigen
 using SparseArrays: issparse
 
-export Multispati,
-    SpatialPCA, fit, predict, mean, eigvals, eigvecs, projection, reconstruct, moransIbounds
+export AbstractMultispati,
+    Multispati,
+    SpatialPCA,
+    fit,
+    predict,
+    mean,
+    eigvals,
+    eigvecs,
+    projection,
+    reconstruct,
+    moransIbounds,
+    varianceMoransIdecomposition
 
 include("multispati.jl")
 include("spatialPCA.jl")

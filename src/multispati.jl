@@ -3,10 +3,13 @@
 # TODO: :auto solver
 # TODO: centering of Multispati?
 
+"""
+    AbstractMultispati
+"""
 abstract type AbstractMultispati <: LinearDimensionalityReduction end
 
 """
-Multispati
+    Multispati <: AbstractMultispati
 """
 struct Multispati{T<:Real} <: AbstractMultispati
     proj::AbstractMatrix{T}
@@ -49,8 +52,7 @@ eigvals(M::AbstractMultispati) = M.eigvals
 
 Transform the observations `x` with the Multispati model `M`.
 
-Here, `x` can be either a vector of length `d` or a matrix where each column is an observation,
-and `\\mathbf{P}` is the projection matrix.
+Here, `x` can be either a vector of length `d` or a matrix where each column is an observation.
 """
 predict(M::Multispati, x::AbstractVecOrMat{T}) where {T<:Real} =
     transpose(projection(M)) * x
@@ -61,7 +63,7 @@ predict(M::Multispati, x::AbstractVecOrMat{T}) where {T<:Real} =
 Approximately reconstruct the observations `y` to the original space using the Multispati model `M`.
 
 Here, `y` can be either a vector of length `p` or a matrix where each column
-gives the components for an observation, and \$\\mathbf{P}\$ is the projection matrix.
+gives the components for an observation.
 """
 reconstruct(M::Multispati, y::AbstractVecOrMat{T}) where {T<:Real} = projection(M) * y
 
@@ -69,7 +71,7 @@ reconstruct(M::Multispati, y::AbstractVecOrMat{T}) where {T<:Real} = projection(
     moransIbounds(M::AbstractMultispati; sparse_approx::Bool=true)
 
 Return the bounds and expected value for Moran's I given the model `M` in the order 
-``I_{min}``,``I_{max}``, ``I_0`` 
+``I_{min}``, ``I_{max}``, ``I_0`` 
 """
 function moransIbounds(M::AbstractMultispati; sparse_approx::Bool=true)
     function doublecenter!(X)
@@ -98,21 +100,6 @@ function moransIbounds(M::AbstractMultispati; sparse_approx::Bool=true)
     return Imin, Imax, I0
 end
 
-"""
-    varianceMoransIdecomposition(M::AbstractMultispati, X)
-
-Decompose the eigenvalues into a variance and Moran's I contribution given the model `M` 
-and matrix `X` which was used for fitting the model.
-"""
-function varianceMoransIdecomposition(M::AbstractMultispati, X)
-    transformedX = predict(M, X)
-    laggedX = transformedX * M.W
-    w = 1 / size(M.W, 1) # sum of row_weights but because its normed the sum is n
-    variance = sum(transformedX .* transformedX .* w; dims=2)
-    moransI = sum(transformedX .* laggedX; dims=2) ./ variance # TODO ? 
-    return variance, moransI
-end
-
 function show(io::IO, M::Multispati)
     idim, odim = size(M)
     return print(io, "Multispati(indim = $idim, outdim = $odim)")
@@ -122,7 +109,7 @@ end
     fit(Multispati, X, W, Q=I, D=I / size(X, 2); ...)
 
 Perform Multispati over the data given a matrix `X`. Each column of `X` is an **observation**.
-`W` is a connectivity matrix where w_{ij} is the connection from j -> i.
+`W` is a connectivity matrix where ``w_{ij}`` is the connection from j -> i.
 `Q` is a symmetric matrix of size `n` and `D` a symmetric matrix of size `d`
 
 **Keyword arguments**
@@ -134,9 +121,13 @@ Perform Multispati over the data given a matrix `X`. Each column of `X` is an **
 - `tol`: Convergence tolerance for `eigs` solver (*default* `0.0`)
 - `maxiter`: Maximum number of iterations for `eigs` solver (*default* `300`)
 
-**Reference:**
+**References**
+
 [S. Dray, et al. "Spatial ordination of vegetation data using a generalization of Wartenberg's 
 multivariate spatial correlation." *Journal of vegetation science* (2008)](https://doi.org/10.3170/2007-8-18312)
+
+[de la Cruz and Holmes. "The duality diagram in data analysis: Examples of modern applications." 
+*The annals of applied statistics* (2011)](https://doi.org/10.1214/10-aoas408)
 """
 function fit(
     ::Type{Multispati},
