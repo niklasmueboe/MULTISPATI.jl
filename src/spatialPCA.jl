@@ -137,5 +137,5 @@ function fit(
         Symmetric(H), maxoutdim; solver=solver, tol=tol, maxiter=maxiter
     )
 
-    return SpatialPCA(mean, eigenvecs, eigenvals, W)
+    return SpatialPCA(meanvec, eigenvecs, eigenvals, W)
 end
