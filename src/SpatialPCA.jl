@@ -64,7 +64,7 @@ function varianceMoransIdecomposition(M::SpatialPCA, X)
     laggedX = transformedX * M.W
     w = 1 / size(M.W, 1) # sum of row_weights but because its normed the sum is n
     variance = sum(transformedX .* transformedX .* w; dims=2)
-    moransI = sum(transformedX .* laggedX .* w; dims=2) ./ variance # TODO ? 
+    moransI = sum(transformedX .* laggedX .* w; dims=2) ./ variance
     return variance, moransI
 end
 
@@ -76,7 +76,7 @@ end
 """
     fit(SpatialPCA, X, W; ...)
 
-Perform spatialPCA over the data given a matrix `X` and `W`. Each column of `X` is an **observation**. 
+Perform SpatialPCA over the data given a matrix `X` and `W`. Each column of `X` is an **observation**. 
 `W` is a connectivity matrix where ``w_{ij}`` is the connection from j -> i.
 
 **Keyword arguments**

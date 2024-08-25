@@ -1,6 +1,6 @@
 # Reference API
 
-Documentation for `MULTISPATI.jl`'s public interface.
+Documentation for `Multispati.jl`'s public interface.
 
 ## Index
 
@@ -10,19 +10,19 @@ Pages = ["api.md"]
 
 ## API
 
-### MULTISPATI
+### Multispati
 ```@docs
 AbstractMultispati
-Multispati
-fit(::Type{Multispati},
+MULTISPATI
+fit(::Type{MULTISPATI},
     X::AbstractMatrix{T},
     W::AbstractMatrix{U},
     Q::AbstractMatrix{T}=I,
     D::AbstractMatrix{T}=I / size(X, 2);
     kwargs
 ) where {T<:Real,U<:Real}
-predict(::Multispati, x::AbstractVecOrMat{T}) where {T<:Real}
-reconstruct(::Multispati, y::AbstractVecOrMat{T}) where {T<:Real}
+predict(::MULTISPATI, x::AbstractVecOrMat{T}) where {T<:Real}
+reconstruct(::MULTISPATI, y::AbstractVecOrMat{T}) where {T<:Real}
 moransIbounds
 size(::AbstractMultispati)
 projection(::AbstractMultispati)

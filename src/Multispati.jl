@@ -1,4 +1,4 @@
-module MULTISPATI
+module Multispati
 
 import Base: size, show
 import LinearAlgebra: eigvals, eigvecs, issymmetric
@@ -12,7 +12,7 @@ using LinearAlgebra: I, Symmetric, eigen, normalize!
 using SparseArrays: issparse
 
 export AbstractMultispati,
-    Multispati,
+    MULTISPATI,
     SpatialPCA,
     fit,
     predict,
@@ -24,7 +24,7 @@ export AbstractMultispati,
     moransIbounds,
     varianceMoransIdecomposition
 
-include("multispati_.jl")
-include("spatialPCA.jl")
+include("MULTISPATI_.jl")
+include("SpatialPCA.jl")
 
-end # module MULTISPATI
+end # module Multispati

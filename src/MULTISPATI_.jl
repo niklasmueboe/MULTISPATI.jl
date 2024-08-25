@@ -1,7 +1,3 @@
-# MULTISPATI
-
-# TODO: :auto solver
-# TODO: centering of Multispati?
 
 """
     AbstractMultispati
@@ -9,9 +5,9 @@
 abstract type AbstractMultispati <: LinearDimensionalityReduction end
 
 """
-    Multispati <: AbstractMultispati
+    MULTISPATI <: AbstractMultispati
 """
-struct Multispati{T<:Real} <: AbstractMultispati
+struct MULTISPATI{T<:Real} <: AbstractMultispati
     proj::AbstractMatrix{T}
     eigvals::AbstractVector{T}
     W::AbstractMatrix{T}
@@ -36,36 +32,36 @@ projection(M::AbstractMultispati) = M.proj
 """
     eigvecs(M::AbstractMultispati)
 
-Get the eigenvectors of the Multispati model `M`.
+Get the eigenvectors of the model `M`.
 """
 eigvecs(M::AbstractMultispati) = projection(M)
 
 """
     eigvals(M::AbstractMultispati)
 
-Get the eigenvalues of the Multispati model `M`.
+Get the eigenvalues of the model `M`.
 """
 eigvals(M::AbstractMultispati) = M.eigvals
 
 """
-    predict(M::Multispati, x::AbstractVecOrMat{<:Real})
+    predict(M::MULTISPATI, x::AbstractVecOrMat{<:Real})
 
-Transform the observations `x` with the Multispati model `M`.
+Transform the observations `x` with the model `M`.
 
 Here, `x` can be either a vector of length `d` or a matrix where each column is an observation.
 """
-predict(M::Multispati, x::AbstractVecOrMat{T}) where {T<:Real} =
+predict(M::MULTISPATI, x::AbstractVecOrMat{T}) where {T<:Real} =
     transpose(projection(M)) * x
 
 """
-    reconstruct(M::Multispati, y::AbstractVecOrMat{<:Real})
+    reconstruct(M::MULTISPATI, y::AbstractVecOrMat{<:Real})
 
-Approximately reconstruct the observations `y` to the original space using the Multispati model `M`.
+Approximately reconstruct the observations `y` to the original space using the model `M`.
 
 Here, `y` can be either a vector of length `p` or a matrix where each column
 gives the components for an observation.
 """
-reconstruct(M::Multispati, y::AbstractVecOrMat{T}) where {T<:Real} = projection(M) * y
+reconstruct(M::MULTISPATI, y::AbstractVecOrMat{T}) where {T<:Real} = projection(M) * y
 
 """
     moransIbounds(M::AbstractMultispati; sparse_approx::Bool=true)
@@ -91,24 +87,28 @@ function moransIbounds(M::AbstractMultispati; sparse_approx::Bool=true)
         doublecenter!(L)
     end
 
-    eigenvals = n / sum(L) * eigs(L; nev=2, which=:BE, ritzvec=false)
+    eigenvals, _ = eigs(L; nev=2, which=:BE, ritzvec=false)
+    eigenvals .*= n / sum(L)
 
     I0 = -1 / (n - 1)
-    Imin = min(eigenvals)
-    Imax = max(eigenvals)
+    Imin = minimum(eigenvals)
+    Imax = maximum(eigenvals)
 
     return Imin, Imax, I0
 end
 
-function show(io::IO, M::Multispati)
+function show(io::IO, M::MULTISPATI)
     idim, odim = size(M)
-    return print(io, "Multispati(indim = $idim, outdim = $odim)")
+    return print(io, "MULTISPATI(indim = $idim, outdim = $odim)")
 end
 
-"""
-    fit(Multispati, X, W, Q=I, D=I / size(X, 2); ...)
+# TODO: :auto solver
+# TODO: centering of MULTISPATI.fit?
 
-Perform Multispati over the data given a matrix `X`. Each column of `X` is an **observation**.
+"""
+    fit(MULTISPATI, X, W, Q=I, D=I / size(X, 2); ...)
+
+Perform MULTISPATI over the data given a matrix `X`. Each column of `X` is an **observation**.
 `W` is a connectivity matrix where ``w_{ij}`` is the connection from j -> i.
 `Q` is a symmetric matrix of size `n` (or LinearAlgebra.UniformScaling(@ref)) 
 and `D` a symmetric matrix of size `d` (or LinearAlgebra.UniformScaling(@ref)) 
@@ -131,7 +131,7 @@ multivariate spatial correlation." *Journal of vegetation science* (2008)](https
 *The annals of applied statistics* (2011)](https://doi.org/10.1214/10-aoas408)
 """
 function fit(
-    ::Type{Multispati},
+    ::Type{MULTISPATI},
     X::AbstractMatrix{T},
     W::AbstractMatrix{U},
     Q=I,
@@ -171,7 +171,7 @@ function fit(
         Symmetric(H), maxoutdim; solver=solver, tol=tol, maxiter=maxiter
     )
 
-    return Multispati(eigenvecs, eigenvals, W)
+    return MULTISPATI(eigenvecs, eigenvals, W)
 end
 
 function validate_maxoutdim(d::Integer, n::Integer, maxoutdim)

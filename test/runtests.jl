@@ -1,4 +1,4 @@
 using Test
-using MULTISPATI
+using Multispati
 
 include("Aqua.jl")

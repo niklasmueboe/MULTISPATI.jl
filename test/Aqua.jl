@@ -1,3 +1,3 @@
 using Aqua
 
-Aqua.test_all(MULTISPATI; ambiguities=(recursive = false))
+Aqua.test_all(Multispati; ambiguities=(recursive = false))
