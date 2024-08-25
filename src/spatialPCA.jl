@@ -64,7 +64,7 @@ function varianceMoransIdecomposition(M::SpatialPCA, X)
     laggedX = transformedX * M.W
     w = 1 / size(M.W, 1) # sum of row_weights but because its normed the sum is n
     variance = sum(transformedX .* transformedX .* w; dims=2)
-    moransI = sum(transformedX .* laggedX; dims=2) ./ variance # TODO ? 
+    moransI = sum(transformedX .* laggedX .* w; dims=2) ./ variance # TODO ? 
     return variance, moransI
 end
 
