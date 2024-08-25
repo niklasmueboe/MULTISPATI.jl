@@ -10,7 +10,7 @@ Pages = ["api.md"]
 
 ## API
 
-### Multispati
+### MULTISPATI
 ```@docs
 AbstractMultispati
 MULTISPATI
@@ -30,7 +30,7 @@ eigvecs(::AbstractMultispati)
 eigvals(::AbstractMultispati)
 ```
 
-### spatialPCA
+### SpatialPCA
 
 ```@docs
 SpatialPCA
